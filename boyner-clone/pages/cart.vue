@@ -34,37 +34,37 @@
           />
         </div>
       </template>
-      <div>
-    <OrganismsSimilarProductsSlider 
-      title="Bunları da Beğenebilirsiniz" 
-      :products="similarProducts" 
-    />
-  </div>
+    <div class="slider-wrapper" v-if="productStore.similarProducts.length > 0">
+        <OrganismsSimilarProductsSlider 
+            title="Bunu Beğenenler Bunları da İnceledi" 
+            :products="productStore.similarProducts"
+            @product-click="goToProduct"
+        />
+      </div>
 
     </div>
   </main>
 </template>
 
 <script setup>
-  const similarProducts = [
-  { 
-    id: 101, 
-    name: 'Slim Fit Gömlek', 
-    brand: 'Fabrika', 
-    price: 899.99, 
-    image: 'https://statics-mp.boyner.com.tr/mnresize/1100/-/Boynerimages/5000036364_200_01.jpg?v=579763', 
-    discountText: '%20 İndirim' 
-  },
-  { 
-    id: 102, 
-    name: 'Keten Pantolon', 
-    brand: 'Network', 
-    price: 1200.00, 
-    image: 'https://statics-mp.boyner.com.tr/mnresize/1100/-/Boynerimages/5000036364_200_01.jpg?v=579763' 
-  },
-  // ... diğer ürünler
-];
+  import { useProductStore } from '~/stores/productStore' 
+import { useCartStore } from '~/stores/cartStore'
+ 
+const router = useRouter()
+const productStore = useProductStore()
 const cartStore = useCartStore()
+onMounted(() => {
+  productStore.fetchSimilarProducts('')
+})
+const goToProduct = (product) => {
+  // 1. Ürün verisi geliyor mu kontrol et
+  if (product && product.id) {
+    // 2. Nuxt'ın otomatik yönlendirme fonksiyonu (Import gerektirmez)
+    navigateTo(`/product/${product.id}`)
+  } else {
+    console.error("Hata: Ürün ID bulunamadı", product)
+  }
+}
 
 // Mapping işlemi (Store verisini arayüze uydurma)
 const formattedItems = computed(() => {

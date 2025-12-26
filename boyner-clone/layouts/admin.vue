@@ -3,6 +3,7 @@
     <OrganismsAdminSidebar />
     <OrganismsAdminHeader />
     
+    
     <main class="admin-main-content">
       <slot />
     </main>

@@ -10,7 +10,9 @@ import {
   deleteDoc, 
   doc,
   query,
-  orderBy
+  orderBy,
+  where, // [YENİ EKLENDİ]
+  limit  // [YENİ EKLENDİ]
 } from 'firebase/firestore'
 import type { IProduct } from '@/types'
 
@@ -19,6 +21,7 @@ export const useProductStore = defineStore('product', {
   state: () => ({
     products: [] as IProduct[], // Tüm ürün listesi
     currentProduct: null as IProduct | null, // Detay sayfasına gidilen ürün
+    similarProducts: [] as IProduct[],
     loading: false,
     error: null as string | null
   }),
@@ -47,6 +50,47 @@ export const useProductStore = defineStore('product', {
         console.error('Ekleme Hatası:', err)
         this.error = err.message
         return false
+      } finally {
+        this.loading = false
+      }
+    },
+    async fetchSimilarProducts(currentProductId: string, category?: string) {
+      this.loading = true
+      const db = getFirestore()
+      
+      try {
+        let q;
+
+        // Senaryo A: Eğer kategori bilgisi varsa, o kategoriden 6 ürün çek
+        if (category) {
+          q = query(
+            collection(db, 'products'), 
+            where('category', '==', category),
+            limit(6) 
+          )
+        } 
+        // Senaryo B: Kategori yoksa rastgele (veya son eklenen) 6 ürün çek
+        else {
+          q = query(
+            collection(db, 'products'),
+            orderBy('createdAt', 'desc'),
+            limit(6)
+          )
+        }
+
+        const querySnapshot = await getDocs(q)
+        const rawProducts = querySnapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        })) as IProduct[]
+        
+        // Kendisini (şu anki ürünü) listeden çıkar
+        this.similarProducts = rawProducts.filter(p => p.id !== currentProductId)
+        
+      } catch (err: any) {
+        console.error('Benzer Ürünler Hatası:', err)
+        // Hata olsa bile slider boş kalsın, uygulamayı kırmasın
+        this.similarProducts = []
       } finally {
         this.loading = false
       }
